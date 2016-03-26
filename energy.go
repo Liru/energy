@@ -47,19 +47,25 @@ func New(initEnergy int, maxEnergy int, interval time.Duration) *Energy {
 
 // CurrentEnergy returns the current energy available for use.
 func (e *Energy) CurrentEnergy() int {
-	if e.usedAt.IsZero() {
-		return e.max
-	}
+	// if e.usedAt.IsZero() {
+	// 	return e.max
+	// }
 	return e.max - e.usedEnergy + e.recovered()
 }
 
 // Use uses a single instance of energy.
 func (e *Energy) Use() bool {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
 	return e.use(1, false)
 }
 
 // UseEnergy uses the specified amount of energy.
 func (e *Energy) UseEnergy(i int) bool {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
 	return e.use(i, false)
 }
 
@@ -121,7 +127,7 @@ func (e *Energy) SetEnergy(i int) {
 		e.usedEnergy = e.max - i
 		e.usedAt = time.Time{}
 	} else {
-		e.use(e.CurrentEnergy()-i, false)
+		e.use(e.CurrentEnergy()-i, true)
 	}
 }
 
@@ -178,9 +184,6 @@ func (e *Energy) recovered() int {
 
 // use is a backend helper that is wrapped by Use and UseEnergy.
 func (e *Energy) use(i int, force bool) bool {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
 	if e.CurrentEnergy() < i && !force {
 		return false
 	}
