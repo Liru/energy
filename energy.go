@@ -27,10 +27,18 @@ type Energy struct {
 
 // New creates and returns a new Energy instance.
 func New(initEnergy int, maxEnergy int, interval time.Duration) *Energy {
+
+	used := maxEnergy - initEnergy
+	var usedAt time.Time
+	if 0 < used {
+		usedAt = time.Now().Add(-interval * time.Duration(used))
+	}
+
 	return &Energy{
 		max:        maxEnergy,
-		usedEnergy: maxEnergy - initEnergy,
+		usedEnergy: used,
 
+		usedAt:           usedAt,
 		recoveryInterval: interval,
 		// recoveryQuantity: quantity,
 	}
@@ -49,8 +57,8 @@ func (e *Energy) Use() bool {
 	return e.use(1, false)
 }
 
-// UseAmount uses a specified amount of energy.
-func (e *Energy) UseAmount(i int) bool {
+// UseEnergy uses the specified amount of energy.
+func (e *Energy) UseEnergy(i int) bool {
 	return e.use(i, false)
 }
 
@@ -165,7 +173,7 @@ func (e *Energy) recovered() int {
 	return rec
 }
 
-// use is a backend helper that is wrapped by Use and UseAmount.
+// use is a backend helper that is wrapped by Use and UseEnergy.
 func (e *Energy) use(i int, force bool) bool {
 	e.mtx.Lock()
 	defer e.mtx.Unlock()
