@@ -1,6 +1,5 @@
 // Package energy provides a concurrent energy system, useful for games and other applications.
-//
-// XXX(Liru): Implement these, you idiot https://golang.org/pkg/bytes/
+
 package energy
 
 import (
@@ -24,6 +23,8 @@ type Energy struct {
 	recoveryInterval time.Duration
 	recoveryQuantity int
 }
+
+// XXX(Liru): Implement these, you idiot https://golang.org/pkg/bytes/
 
 // New creates and returns a new Energy instance.
 func New(initEnergy int, maxEnergy int, interval time.Duration) *Energy {
@@ -97,11 +98,11 @@ func (e *Energy) FullyRecoversIn() time.Duration {
 
 // String satisfies the fmt.Stringer interface.
 func (e *Energy) String() string {
-	s := fmt.Sprintf("<Energy %d/%d", e.CurrentEnergy, e.max)
+	s := fmt.Sprintf("<Energy %d/%d", e.CurrentEnergy(), e.max)
 	if e.CurrentEnergy() < e.max {
 		//TODO: get recovery time and input below
 		nextRecover := e.RecoversIn()
-		mins, secs := nextRecover.Minutes(), int(nextRecover.Seconds())%60
+		mins, secs := int(nextRecover.Minutes()), int(nextRecover.Seconds())%60
 		s += fmt.Sprintf(" recover in %02d:%02d", mins, secs)
 	}
 	s += ">"
@@ -124,10 +125,12 @@ func (e *Energy) SetEnergy(i int) {
 	}
 }
 
+// ResetEnergy resets the energy to its current maximum.
 func (e *Energy) ResetEnergy() {
 	e.SetEnergy(e.max)
 }
 
+// SetMax sets the maximum energy to the parameter.
 func (e *Energy) SetMax(i int) {
 	e.mtx.Lock()
 	defer e.mtx.Unlock()
