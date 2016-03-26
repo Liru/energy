@@ -17,7 +17,6 @@ var ErrMaxed = errors.New("energy is at or over maximum")
 type Energy struct {
 	mtx sync.RWMutex
 
-	current    int
 	usedEnergy int
 	usedAt     time.Time
 	max        int
@@ -27,36 +26,22 @@ type Energy struct {
 }
 
 // New creates and returns a new Energy instance.
-func New(quantity int, max int, interval time.Duration) *Energy {
+func New(initEnergy int, maxEnergy int, interval time.Duration) *Energy {
 	return &Energy{
-		max:              max,
+		max:        maxEnergy,
+		usedEnergy: maxEnergy - initEnergy,
+
 		recoveryInterval: interval,
-		recoveryQuantity: quantity,
+		// recoveryQuantity: quantity,
 	}
 }
 
 // CurrentEnergy returns the current energy available for use.
 func (e *Energy) CurrentEnergy() int {
-	return e.current
-}
-
-// use is a backend helper that is wrapped by Use and UseAmount.
-func (e *Energy) use(i int, force bool) bool {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if e.current < i && !force {
-		return false
+	if e.usedAt.IsZero() {
+		return e.max
 	}
-
-	if ((e.current-i < e.max) && (e.max <= e.current)) || force {
-		e.usedEnergy = i - e.current + e.max
-		e.usedAt = time.Now()
-	} else {
-		e.usedEnergy = e.max - e.current + i
-	}
-
-	return true
+	return e.max - e.usedEnergy + e.recovered()
 }
 
 // Use uses a single instance of energy.
@@ -98,14 +83,14 @@ func (e *Energy) FullyRecoversIn() time.Duration {
 		return 0
 	}
 
-	ttr := e.max - e.current - 1
+	ttr := e.max - e.CurrentEnergy() - 1
 	return nextRecover + e.recoveryInterval*time.Duration(ttr)
 }
 
 // String satisfies the fmt.Stringer interface.
 func (e *Energy) String() string {
-	s := fmt.Sprintf("<Energy %d/%d", e.current, e.max)
-	if e.current < e.max {
+	s := fmt.Sprintf("<Energy %d/%d", e.CurrentEnergy, e.max)
+	if e.CurrentEnergy() < e.max {
 		//TODO: get recovery time and input below
 		nextRecover := e.RecoversIn()
 		mins, secs := nextRecover.Minutes(), int(nextRecover.Seconds())%60
@@ -127,7 +112,7 @@ func (e *Energy) SetEnergy(i int) {
 		e.usedEnergy = e.max - i
 		e.usedAt = time.Time{}
 	} else {
-		e.use(e.current-i, false)
+		e.use(e.CurrentEnergy()-i, false)
 	}
 }
 
@@ -140,7 +125,7 @@ func (e *Energy) SetMax(i int) {
 	defer e.mtx.Unlock()
 
 	e.max = i
-	if e.max < e.current {
+	if e.max < e.CurrentEnergy() {
 		e.usedAt = time.Time{}
 	}
 
@@ -178,4 +163,23 @@ func (e *Energy) recovered() int {
 		return e.usedEnergy
 	}
 	return rec
+}
+
+// use is a backend helper that is wrapped by Use and UseAmount.
+func (e *Energy) use(i int, force bool) bool {
+	e.mtx.Lock()
+	defer e.mtx.Unlock()
+
+	if e.CurrentEnergy() < i && !force {
+		return false
+	}
+
+	if ((e.CurrentEnergy()-i < e.max) && (e.max <= e.CurrentEnergy())) || force {
+		e.usedEnergy = i - e.CurrentEnergy() + e.max
+		e.usedAt = time.Now()
+	} else {
+		e.usedEnergy = e.max - e.CurrentEnergy() + i
+	}
+
+	return true
 }
