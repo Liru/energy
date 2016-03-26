@@ -1,4 +1,4 @@
-# energy [![Go Report Card](https://goreportcard.com/badge/github.com/liru/energy)](https://goreportcard.com/report/github.com/liru/energy) [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/liru/energy/master/LICENSE) [![](https://godoc.org/github.com/liru/energy?status.svg)](http://godoc.org/github.com/liru/energy)
+# energy [![Coverage](https://gocover.io/_badge/github.com/liru/energy)](https://gocover.io/github.com/liru/energy/)[![Go Report Card](https://goreportcard.com/badge/github.com/liru/energy)](https://goreportcard.com/report/github.com/liru/energy)[![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/liru/energy/master/LICENSE)[![](https://godoc.org/github.com/liru/energy?status.svg)](http://godoc.org/github.com/liru/energy)
 Energy provides a concurrent energy system, useful for games and other applications. 
 
 Energy was heavily inspired by Heungsub Lee's [energy](https://github.com/sublee/energy) module for Python.
