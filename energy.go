@@ -1,5 +1,4 @@
 // Package energy provides a concurrent energy system, useful for games and other applications.
-
 package energy
 
 import (
@@ -31,9 +30,10 @@ func New(initEnergy int, maxEnergy int, interval time.Duration) *Energy {
 
 	used := maxEnergy - initEnergy
 	var usedAt time.Time
-	if 0 < used {
-		usedAt = time.Now().Add(-interval * time.Duration(used))
-	}
+	// if 0 < used {
+	// 	usedAt = time.Now().Add(-interval * time.Duration(used))
+	// }
+	usedAt = time.Now()
 
 	return &Energy{
 		max:        maxEnergy,
@@ -74,13 +74,14 @@ func (e *Energy) UseEnergy(i int) bool {
 // If energy cannot be recovered, RecoversIn returns 0 and an error
 // explaining why it cannot be recovered.
 func (e *Energy) RecoversIn() time.Duration {
-	p := e.passed()
-	if p == 0 {
+	if e.usedAt.IsZero() {
 		return 0
 	}
 
-	ticks := p / e.recoveryInterval
-	if int(ticks) >= e.usedEnergy {
+	p := e.passed()
+
+	ticks := int(p / e.recoveryInterval)
+	if ticks >= e.usedEnergy {
 		return 0
 	}
 
@@ -141,11 +142,14 @@ func (e *Energy) SetMax(i int) {
 	e.mtx.Lock()
 	defer e.mtx.Unlock()
 
-	e.max = i
-	if e.max < e.CurrentEnergy() {
+	if i < e.CurrentEnergy() {
+		// if e.RecoversIn() != 0 {
+		// 	e.usedEnergy += i - e.max
+		// }
 		e.usedAt = time.Time{}
+		e.usedEnergy = 0
 	}
-
+	e.max = i
 }
 
 // SetInterval sets the interval at which energy is regained.
@@ -173,7 +177,7 @@ func (e *Energy) recovered() int {
 		return 0
 	}
 
-	intervals := int(e.passed() / e.recoveryInterval)
+	intervals := int(p / e.recoveryInterval)
 	rec := intervals * e.recoveryQuantity
 
 	if rec > e.usedEnergy {

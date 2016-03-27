@@ -1,6 +1,7 @@
 package energy
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -57,7 +58,6 @@ func TestUse(t *testing.T) {
 				i, test.expected, current,
 			)
 		}
-
 	}
 }
 
@@ -111,19 +111,71 @@ func TestResetEnergy(t *testing.T) {
 }
 
 func TestRecoverEnergy(t *testing.T) {
-	t.Skip("test not written yet")
+	t.Skip("test not written yet -- requires stubbing time")
 }
 
 func TestUseEnergyWhileRecovering(t *testing.T) {
-	t.Skip("test not written yet")
+	t.Skip("test not written yet -- requires stubbing time")
 }
 
 func TestSetMaxEnergy(t *testing.T) {
-	t.Skip("test not written yet")
+	var tests = []struct {
+		normal   int
+		max      int
+		setMax   int
+		expected int
+	}{
+		{10, 10, 11, 11},
+		{15, 20, 20, 15},
+		{5, 5, 10, 10},
+		{10, 10, 1, 1},
+		{25, 100, 1, 1},
+		{1, 1, 100, 100},
+	}
+
+	for i, test := range tests {
+		e := New(test.normal, test.max, defaultEnergy.interval)
+		e.SetMax(test.setMax)
+		current := e.CurrentEnergy()
+		if current != test.expected {
+			t.Errorf("#%d: SetMax(%d)= %d, expected %d",
+				i, test.setMax, current, test.expected,
+			)
+		}
+	}
 }
 
 func TestExtraEnergy(t *testing.T) {
-	t.Skip("test not written yet")
+	// TODO(Liru): Test not finished yet -- requires stubbing time
+
+	var tests = []struct {
+		starting       int
+		useAmount      int
+		expectedEnergy int
+		expectedTime   time.Time
+	}{ // This
+		{15, 5, 10, time.Time{}},
+		{20, 1, 19, time.Time{}},
+	}
+
+	for i, test := range tests {
+		e := New(5, defaultEnergy.max, defaultEnergy.interval)
+		e.SetEnergy(test.starting)
+		e.UseEnergy(test.useAmount)
+		current := e.CurrentEnergy()
+
+		if current != test.expectedEnergy {
+			t.Errorf("#%d: [extra] SetEnergy(%d, %d)=%d energy, expected %d",
+				i, test.starting, test.useAmount, current, test.expectedEnergy,
+			)
+		}
+
+		if e.usedAt != test.expectedTime {
+			t.Errorf("#%d: [extra] SetEnergy(%d, %d)=%v time, expected %v",
+				i, test.starting, test.useAmount, e.usedAt, test.expectedTime,
+			)
+		}
+	}
 }
 
 func TestRecoveryQuantity(t *testing.T) {
@@ -143,13 +195,32 @@ func TestExtraEnergyRecovery(t *testing.T) {
 // ===== Additional stuff =====
 
 func TestString(t *testing.T) {
-	t.Skip("test not written yet")
+	// TODO(Liru): Test not finished yet -- requires stubbing time
+
+	var tests = []struct {
+		starting int
+		max      int
+		expected string
+	}{ // This
+		{10, 10, "<Energy 10/10>"},
+		{5, 10, "<Energy 5/10 recover in 60:00>"},
+	}
+
+	for i, test := range tests {
+		e := New(test.starting, test.max, time.Hour)
+		current := fmt.Sprint(e)
+		if current != test.expected {
+			t.Errorf("#%d: Energy.String()='%s', expected '%s'",
+				i, current, test.expected,
+			)
+		}
+	}
 }
 
 func TestJSON(t *testing.T) {
-	t.Skip("test not written yet")
+	t.Skip("functionality not implemented yet")
 }
 
 func TestEnergySort(t *testing.T) {
-	t.Skip("test not written yet")
+	t.Skip("functionality not implemented yet")
 }
